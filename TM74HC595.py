@@ -49,6 +49,13 @@ class TM74HC595Controller:
 
         Be advised: not all characters are available for 8-segment displays! 
         See TM74HC595Controller._CHARS.keys() for a list of valid characters.
+        The dot character can be used in the sequence as well.
+
+        Example usage:
+
+        import TM74HC595
+        c = TM74HC595.TM74HC595Controller(21, 22, 23, 8)
+        c.show_sequence('-1.234567', 1000)
 
         :param sequence: The sequence of str-type characters to show. 
         :param redraw: The number of times this method should redraw the full 
