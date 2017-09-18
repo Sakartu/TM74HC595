@@ -59,7 +59,7 @@ class TM74HC595Controller:
 
         :param sequence: The sequence of str-type characters to show. 
         :param redraw: The number of times this method should redraw the full 
-        sequence
+        sequence. Should be >= 1.
         :param clear: Whether this method should clear the display after all 
         redraws are done
         """
@@ -80,5 +80,30 @@ class TM74HC595Controller:
                 self._set_port(c, 1<<i)
 
         if clear:
+            self.clear()
+
+    def clear(self):
             for i in range(self.num_displays):  # clear display
                 self._set_port(0xFF, 1<<i)
+
+    def test(self):
+        """
+        A method to test whether everything is working correctly
+        """
+        import time
+        for i in range(self.num_displays):  # test each port
+            self._set_port(self._CHARS['8'], 1 << i)
+            time.sleep(0.5)
+
+        # all displays at once, low-level
+        self._set_port(self._CHARS['8'], 2 ** self.num_displays - 1)
+        time.sleep(1)
+
+        # all displays at once, high-level
+        self.show_sequence('8'*self.num_displays, 1000)  # all 8's
+
+        # counter, speed test
+        for i in range(-999, 1000):
+            self.show_sequence('{:-4d}'.format(i), 1, False)
+
+        self.clear()
