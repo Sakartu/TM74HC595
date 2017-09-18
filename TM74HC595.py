@@ -39,17 +39,18 @@ class TM74HC595Controller:
         self.rclk.value(1)
 
 
-    def show_sequence(self, sequence, redraw=100, clear=True):
+    def show_sequence(self, sequence, redraw=100, clear=True, start_at=0):
         """
         Use this method to show a sequence of characters on the 8-segment
-        display. Because the TM74HC595 controller can only control a single 
+        display. Because the TM74HC595 controller can only control a single
         display at a time, it sets each display very quickly, one after the
         other, so that the human eye does not see it flickering. The number of
-        redraws it should do can be specified by the user, thus definig how 
+        redraws it should do can be specified by the user, thus definig how
         long the sequence should be displayed. The user can also choose to clear
-        the display after the redraws or not.
+        the display after the redraws or not and where to start displaying the
+        given text.
 
-        Be advised: not all characters are available for 8-segment displays! 
+        Be advised: not all characters are available for 8-segment displays!
         See TM74HC595Controller._CHARS.keys() for a list of valid characters.
         The dot character can be used in the sequence as well.
 
@@ -59,13 +60,17 @@ class TM74HC595Controller:
         c = TM74HC595.TM74HC595Controller(21, 22, 23, 8)
         c.show_sequence('-1.234567', 1000)
 
-        :param sequence: The sequence of str-type characters to show. 
-        :param redraw: The number of times this method should redraw the full 
+        :param sequence: The sequence of str-type characters to show.
+        :param redraw: The number of times this method should redraw the full
         sequence. Should be >= 1.
-        :param clear: Whether this method should clear the display after all 
+        :param clear: Whether this method should clear the display after all
         redraws are done
+        :param start_at: Where to start displaying text
         """
         to_display = array.array('B')
+        for _ in range(start_at):
+            to_display.append(self._CHARS[' '])
+
         i = 0
         while i < len(sequence):
             c = sequence[i]
@@ -100,12 +105,26 @@ class TM74HC595Controller:
         # all displays at once, low-level
         self._set_port(self._CHARS['8'], 2 ** self.num_displays - 1)
         time.sleep(1)
+        self.clear()
+        time.sleep(0.2)
 
         # all displays at once, high-level
-        self.show_sequence('8'*self.num_displays, 1000)  # all 8's
+        self.show_sequence('8'*self.num_displays, 500)  # all 8's
+
+        # left half, right half
+        half = self.num_displays // 2
+        self.show_sequence('8' * half, 500, start_at=0)  # left half
+        self.show_sequence('8' * half, 500, start_at=half)  # right half
 
         # counter, speed test
-        for i in range(-999, 1000):
-            self.show_sequence('{:-4d}'.format(i), 1, False)
+        if self.num_displays == 4:
+            for i in range(-999, 1000):
+                self.show_sequence('{:-4d}'.format(i), 1, False)
+        else:
+            for i in range(-999, 1000):
+                self.show_sequence('{:-4d}{:-4d}'.format(i, i), 1, False)
 
         self.clear()
+        self.show_sequence('dOnE', 500)
+        self.clear()
+
